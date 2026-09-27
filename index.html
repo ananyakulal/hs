@@ -1,0 +1,2805 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Hostel Food Count</title>
+
+<!-- =====================================================
+     FIREBASE
+===================================================== -->
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    doc,
+    onSnapshot,
+    query,
+    orderBy,
+    serverTimestamp,
+    getDocs,
+    where
+}
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+/* =====================================================
+   YOUR FIREBASE CONFIGURATION
+
+   REPLACE THESE VALUES WITH YOUR FIREBASE PROJECT
+===================================================== */
+
+const firebaseConfig = {
+
+    apiKey: "YOUR_API_KEY",
+
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+
+    projectId: "YOUR_PROJECT_ID",
+
+    storageBucket: "YOUR_PROJECT.firebasestorage.app",
+
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+
+    appId: "YOUR_APP_ID"
+
+};
+
+
+/* =====================================================
+   INITIALIZE FIREBASE
+===================================================== */
+
+const app =
+    initializeApp(firebaseConfig);
+
+const db =
+    getFirestore(app);
+
+
+/* Make Firebase available to the page */
+
+window.firebaseDB = db;
+
+window.firebaseFunctions = {
+
+    collection,
+    addDoc,
+    updateDoc,
+    deleteDoc,
+    doc,
+    onSnapshot,
+    query,
+    orderBy,
+    serverTimestamp,
+    getDocs,
+    where
+
+};
+
+
+/* Start application */
+
+window.startHostelApp();
+
+</script>
+
+
+<style>
+
+/* =====================================================
+   GENERAL
+===================================================== */
+
+* {
+
+    margin: 0;
+
+    padding: 0;
+
+    box-sizing: border-box;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+}
+
+body {
+
+    background: #f1f5f9;
+
+    color: #1e293b;
+
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+header {
+
+    background:
+        linear-gradient(
+            135deg,
+            #2563eb,
+            #4f46e5
+        );
+
+    color: white;
+
+    padding: 25px 20px;
+
+    text-align: center;
+
+}
+
+header h1 {
+
+    font-size: 30px;
+
+    margin-bottom: 8px;
+
+}
+
+header p {
+
+    opacity: .9;
+
+}
+
+
+/* =====================================================
+   MAIN CONTAINER
+===================================================== */
+
+.container {
+
+    width: 95%;
+
+    max-width: 1400px;
+
+    margin: 25px auto;
+
+}
+
+
+/* =====================================================
+   CONNECTION STATUS
+===================================================== */
+
+.status-box {
+
+    background: #dcfce7;
+
+    color: #166534;
+
+    border-left:
+        5px solid #16a34a;
+
+    padding: 12px 15px;
+
+    margin-bottom: 20px;
+
+    border-radius: 8px;
+
+    font-weight: bold;
+
+}
+
+.status-box.error {
+
+    background: #fee2e2;
+
+    color: #991b1b;
+
+    border-color: #dc2626;
+
+}
+
+
+/* =====================================================
+   SUMMARY
+===================================================== */
+
+.summary {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 15px;
+
+    margin-bottom: 25px;
+
+}
+
+.card {
+
+    background: white;
+
+    padding: 20px;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 4px 12px
+        rgba(0,0,0,.08);
+
+    text-align: center;
+
+}
+
+.card h3 {
+
+    color: #64748b;
+
+    font-size: 15px;
+
+    margin-bottom: 8px;
+
+}
+
+.card .number {
+
+    font-size: 30px;
+
+    font-weight: bold;
+
+    color: #2563eb;
+
+}
+
+
+/* =====================================================
+   BOXES
+===================================================== */
+
+.form-box,
+.food-count,
+.student-section {
+
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 4px 12px
+        rgba(0,0,0,.08);
+
+    margin-bottom: 25px;
+
+}
+
+.form-box h2,
+.food-count h2,
+.student-section h2 {
+
+    color: #1e3a8a;
+
+    margin-bottom: 20px;
+
+}
+
+
+/* =====================================================
+   FORM
+===================================================== */
+
+.form-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 15px;
+
+}
+
+.input-group {
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+.input-group label {
+
+    font-weight: bold;
+
+    margin-bottom: 7px;
+
+}
+
+input,
+select {
+
+    padding: 12px;
+
+    border:
+        1px solid #cbd5e1;
+
+    border-radius: 7px;
+
+    font-size: 15px;
+
+    outline: none;
+
+}
+
+input:focus {
+
+    border-color: #2563eb;
+
+}
+
+
+/* =====================================================
+   MEALS
+===================================================== */
+
+.meal-section {
+
+    margin-top: 25px;
+
+}
+
+.meal-section h3 {
+
+    margin-bottom: 12px;
+
+    color: #334155;
+
+}
+
+.meal-options {
+
+    display: flex;
+
+    gap: 12px;
+
+    flex-wrap: wrap;
+
+}
+
+.meal-option {
+
+    background: #f8fafc;
+
+    border:
+        1px solid #cbd5e1;
+
+    padding: 12px 18px;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+}
+
+.meal-option:hover {
+
+    background: #eff6ff;
+
+}
+
+.meal-option input {
+
+    margin-right: 7px;
+
+}
+
+
+/* =====================================================
+   DINNER
+===================================================== */
+
+.dinner-box {
+
+    margin-top: 15px;
+
+    padding: 15px;
+
+    background: #f8fafc;
+
+    border-radius: 8px;
+
+}
+
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+.button-row {
+
+    display: flex;
+
+    gap: 12px;
+
+    margin-top: 25px;
+
+}
+
+button {
+
+    border: none;
+
+    cursor: pointer;
+
+    padding: 12px 22px;
+
+    border-radius: 7px;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+}
+
+.add-btn {
+
+    background: #2563eb;
+
+    color: white;
+
+}
+
+.add-btn:hover {
+
+    background: #1d4ed8;
+
+}
+
+.clear-btn {
+
+    background: #ef4444;
+
+    color: white;
+
+}
+
+.clear-btn:hover {
+
+    background: #dc2626;
+
+}
+
+.edit-btn {
+
+    background: #f59e0b;
+
+    color: white;
+
+    padding: 7px 12px;
+
+    font-size: 13px;
+
+    margin-right: 5px;
+
+}
+
+.delete-btn {
+
+    background: #ef4444;
+
+    color: white;
+
+    padding: 7px 12px;
+
+    font-size: 13px;
+
+}
+
+
+/* =====================================================
+   FOOD COUNT
+===================================================== */
+
+.food-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 15px;
+
+}
+
+.food-card {
+
+    padding: 18px;
+
+    border-radius: 10px;
+
+    background: #f8fafc;
+
+    border-left:
+        5px solid #2563eb;
+
+}
+
+.food-card h3 {
+
+    margin-bottom: 10px;
+
+}
+
+.food-card p {
+
+    margin: 6px 0;
+
+    color: #475569;
+
+}
+
+
+/* =====================================================
+   STUDENT HEADER
+===================================================== */
+
+.student-header {
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items: center;
+
+    gap: 15px;
+
+    margin-bottom: 20px;
+
+}
+
+.search {
+
+    width: 280px;
+
+}
+
+
+/* =====================================================
+   TABLE
+===================================================== */
+
+.table-container {
+
+    overflow-x: auto;
+
+}
+
+table {
+
+    width: 100%;
+
+    border-collapse:
+        collapse;
+
+    min-width: 1300px;
+
+}
+
+th {
+
+    background: #1e3a8a;
+
+    color: white;
+
+    padding: 13px;
+
+    text-align: center;
+
+}
+
+td {
+
+    padding: 11px;
+
+    text-align: center;
+
+    border-bottom:
+        1px solid #e2e8f0;
+
+}
+
+tr:hover {
+
+    background: #f8fafc;
+
+}
+
+.yes {
+
+    color: #16a34a;
+
+    font-weight: bold;
+
+}
+
+.no {
+
+    color: #94a3b8;
+
+}
+
+.empty {
+
+    text-align: center;
+
+    padding: 30px;
+
+    color: #64748b;
+
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 900px) {
+
+    .summary {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+    }
+
+    .form-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+    .food-grid {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+    }
+
+}
+
+@media (max-width: 600px) {
+
+    header h1 {
+
+        font-size: 24px;
+
+    }
+
+    .summary {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+    }
+
+    .food-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+    .student-header {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+    }
+
+    .search {
+
+        width: 100%;
+
+    }
+
+    .button-row {
+
+        flex-direction: column;
+
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <h1>🍽️ Hostel Food Count</h1>
+
+    <p>
+        Daily Student Food Requirement Management
+    </p>
+
+</header>
+
+
+<div class="container">
+
+
+<!-- CONNECTION STATUS -->
+
+<div
+    class="status-box"
+    id="statusBox"
+>
+
+    🔄 Connecting to shared database...
+
+</div>
+
+
+<!-- =====================================================
+     SUMMARY
+===================================================== -->
+
+<div class="summary">
+
+
+    <div class="card">
+
+        <h3>Total Students</h3>
+
+        <div
+            class="number"
+            id="totalStudents"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>Morning Tea</h3>
+
+        <div
+            class="number"
+            id="totalMorningTea"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>Breakfast</h3>
+
+        <div
+            class="number"
+            id="totalBreakfast"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>Lunch</h3>
+
+        <div
+            class="number"
+            id="totalLunch"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>Snacks</h3>
+
+        <div
+            class="number"
+            id="totalSnacks"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>Evening Tea</h3>
+
+        <div
+            class="number"
+            id="totalEveningTea"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>Dinner</h3>
+
+        <div
+            class="number"
+            id="totalDinner"
+        >
+            0
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>Sweet</h3>
+
+        <div
+            class="number"
+            id="totalSweet"
+        >
+            0
+        </div>
+
+    </div>
+
+
+</div>
+
+
+<!-- =====================================================
+     FORM
+===================================================== -->
+
+<div class="form-box">
+
+
+<h2 id="formTitle">
+
+    ➕ Add Student Food Requirement
+
+</h2>
+
+
+<div class="form-grid">
+
+
+<div class="input-group">
+
+<label>
+    Student Name *
+</label>
+
+<input
+    type="text"
+    id="studentName"
+    placeholder="Enter student name"
+>
+
+</div>
+
+
+<div class="input-group">
+
+<label>
+    Room Number *
+</label>
+
+<input
+    type="text"
+    id="roomNumber"
+    placeholder="Example: 204"
+>
+
+</div>
+
+
+</div>
+
+
+<!-- MORNING TEA -->
+
+<div class="meal-section">
+
+<h3>
+    🌅 Morning Tea
+</h3>
+
+<div class="meal-options">
+
+<label class="meal-option">
+
+<input
+    type="checkbox"
+    id="morningTea"
+>
+
+☕ Morning Tea
+
+</label>
+
+</div>
+
+</div>
+
+
+<!-- BREAKFAST -->
+
+<div class="meal-section">
+
+<h3>
+    🍳 Breakfast
+</h3>
+
+<div class="meal-options">
+
+<label class="meal-option">
+
+<input
+    type="checkbox"
+    id="breakfast"
+>
+
+🍳 Breakfast
+
+</label>
+
+</div>
+
+</div>
+
+
+<!-- LUNCH -->
+
+<div class="meal-section">
+
+<h3>
+    🍛 Lunch
+</h3>
+
+<div class="meal-options">
+
+
+<label class="meal-option">
+
+<input
+    type="radio"
+    name="lunchType"
+    value="Dining Hall"
+    checked
+>
+
+🍛 Dining Hall
+
+</label>
+
+
+<label class="meal-option">
+
+<input
+    type="radio"
+    name="lunchType"
+    value="Tiffin Box"
+>
+
+📦 Tiffin Box
+
+</label>
+
+
+</div>
+
+</div>
+
+
+<div class="meal-section">
+
+<label class="meal-option">
+
+<input
+    type="checkbox"
+    id="lunch"
+>
+
+✓ Lunch Required
+
+</label>
+
+</div>
+
+
+<!-- SNACKS -->
+
+<div class="meal-section">
+
+<h3>
+    🍪 Snacks
+</h3>
+
+<div class="meal-options">
+
+<label class="meal-option">
+
+<input
+    type="checkbox"
+    id="snacks"
+>
+
+🍪 Snacks
+
+</label>
+
+</div>
+
+</div>
+
+
+<!-- EVENING TEA -->
+
+<div class="meal-section">
+
+<h3>
+    ☕ Evening Tea
+</h3>
+
+<div class="meal-options">
+
+<label class="meal-option">
+
+<input
+    type="checkbox"
+    id="eveningTea"
+>
+
+☕ Evening Tea
+
+</label>
+
+</div>
+
+</div>
+
+
+<!-- DINNER -->
+
+<div class="meal-section">
+
+<h3>
+    🍽️ Dinner
+</h3>
+
+<div class="meal-options">
+
+<label class="meal-option">
+
+<input
+    type="checkbox"
+    id="dinner"
+>
+
+🍽️ Dinner Required
+
+</label>
+
+</div>
+
+
+<div class="dinner-box">
+
+
+<h3>
+    Dinner Food Type
+</h3>
+
+
+<div class="meal-options">
+
+
+<label class="meal-option">
+
+<input
+    type="radio"
+    name="dinnerType"
+    value="Veg"
+    checked
+>
+
+🥗 Veg
+
+</label>
+
+
+<label class="meal-option">
+
+<input
+    type="radio"
+    name="dinnerType"
+    value="Non-Veg"
+>
+
+🍗 Non-Veg
+
+</label>
+
+
+</div>
+
+
+<h3 style="margin-top:15px;">
+    Sweet
+</h3>
+
+
+<div class="meal-options">
+
+<label class="meal-option">
+
+<input
+    type="checkbox"
+    id="sweet"
+>
+
+🍰 Sweet
+
+</label>
+
+</div>
+
+
+</div>
+
+</div>
+
+
+<!-- BUTTONS -->
+
+<div class="button-row">
+
+
+<button
+    class="add-btn"
+    id="saveButton"
+    onclick="saveStudent()"
+>
+
+➕ Add Student
+
+</button>
+
+
+<button
+    class="clear-btn"
+    onclick="clearForm()"
+>
+
+Clear Form
+
+</button>
+
+
+</div>
+
+
+</div>
+
+
+<!-- =====================================================
+     FOOD COUNT
+===================================================== -->
+
+<div class="food-count">
+
+<h2>
+    📊 Today's Food Count
+</h2>
+
+
+<div class="food-grid">
+
+
+<div class="food-card">
+
+<h3>
+    ☕ Morning Tea
+</h3>
+
+<p>
+    Total:
+    <strong id="morningTeaCount">
+        0
+    </strong>
+</p>
+
+</div>
+
+
+<div class="food-card">
+
+<h3>
+    🍳 Breakfast
+</h3>
+
+<p>
+    Total:
+    <strong id="breakfastCount">
+        0
+    </strong>
+</p>
+
+</div>
+
+
+<div class="food-card">
+
+<h3>
+    🍛 Lunch
+</h3>
+
+<p>
+    Total:
+    <strong id="lunchCount">
+        0
+    </strong>
+</p>
+
+<p>
+    Dining Hall:
+    <strong id="diningCount">
+        0
+    </strong>
+</p>
+
+<p>
+    Tiffin Box:
+    <strong id="tiffinCount">
+        0
+    </strong>
+</p>
+
+</div>
+
+
+<div class="food-card">
+
+<h3>
+    🍪 Snacks
+</h3>
+
+<p>
+    Total:
+    <strong id="snacksCount">
+        0
+    </strong>
+</p>
+
+</div>
+
+
+<div class="food-card">
+
+<h3>
+    ☕ Evening Tea
+</h3>
+
+<p>
+    Total:
+    <strong id="eveningTeaCount">
+        0
+    </strong>
+</p>
+
+</div>
+
+
+<div class="food-card">
+
+<h3>
+    🍽️ Dinner
+</h3>
+
+<p>
+    Total:
+    <strong id="dinnerCount">
+        0
+    </strong>
+</p>
+
+<p>
+    Veg:
+    <strong id="dinnerVeg">
+        0
+    </strong>
+</p>
+
+<p>
+    Non-Veg:
+    <strong id="dinnerNonVeg">
+        0
+    </strong>
+</p>
+
+</div>
+
+
+<div class="food-card">
+
+<h3>
+    🍰 Sweet
+</h3>
+
+<p>
+    Total:
+    <strong id="sweetCount">
+        0
+    </strong>
+</p>
+
+</div>
+
+
+</div>
+
+</div>
+
+
+<!-- =====================================================
+     STUDENT LIST
+===================================================== -->
+
+<div class="student-section">
+
+
+<div class="student-header">
+
+
+<h2>
+    👨‍🎓 Student List
+</h2>
+
+
+<input
+    class="search"
+    type="text"
+    id="search"
+    placeholder="🔍 Search student..."
+    onkeyup="displayStudents()"
+>
+
+
+</div>
+
+
+<div class="table-container">
+
+
+<table>
+
+
+<thead>
+
+<tr>
+
+<th>#</th>
+
+<th>Name</th>
+
+<th>Room</th>
+
+<th>Morning Tea</th>
+
+<th>Breakfast</th>
+
+<th>Lunch</th>
+
+<th>Lunch Type</th>
+
+<th>Snacks</th>
+
+<th>Evening Tea</th>
+
+<th>Dinner</th>
+
+<th>Dinner Type</th>
+
+<th>Sweet</th>
+
+<th>Action</th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="studentTable">
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   GLOBAL DATA
+===================================================== */
+
+let students = [];
+
+let editingId = null;
+
+let unsubscribe = null;
+
+
+/* =====================================================
+   FIREBASE FUNCTIONS
+===================================================== */
+
+function getFirebase() {
+
+    return window.firebaseFunctions;
+
+}
+
+
+/* =====================================================
+   START APPLICATION
+===================================================== */
+
+window.startHostelApp = function() {
+
+    /*
+        Wait until Firebase is initialized.
+    */
+
+    setTimeout(
+        startRealtimeDatabase,
+        500
+    );
+
+};
+
+
+/* =====================================================
+   REAL-TIME DATABASE
+===================================================== */
+
+function startRealtimeDatabase() {
+
+    try {
+
+        const {
+
+            collection,
+            onSnapshot,
+            query,
+            orderBy
+
+        } = getFirebase();
+
+
+        const db =
+            window.firebaseDB;
+
+
+        const studentsRef =
+            collection(
+                db,
+                "hostelStudents"
+            );
+
+
+        const studentsQuery =
+            query(
+                studentsRef,
+                orderBy(
+                    "createdAt",
+                    "desc"
+                )
+            );
+
+
+        /*
+            IMPORTANT:
+
+            onSnapshot means everyone gets
+            updates immediately.
+
+            Person A adds student
+            ↓
+            Person B sees it automatically.
+        */
+
+        unsubscribe =
+            onSnapshot(
+                studentsQuery,
+
+                snapshot => {
+
+                    students = [];
+
+
+                    snapshot.forEach(
+                        item => {
+
+                            students.push({
+
+                                id:
+                                    item.id,
+
+                                ...item.data()
+
+                            });
+
+                        }
+                    );
+
+
+                    displayStudents();
+
+                    updateCounts();
+
+                    updateStatus();
+
+                },
+
+
+                error => {
+
+                    console.error(
+                        error
+                    );
+
+
+                    const status =
+                        document.getElementById(
+                            "statusBox"
+                        );
+
+
+                    status.className =
+                        "status-box error";
+
+
+                    status.textContent =
+                        "❌ Database connection error. Please check Firebase configuration.";
+
+                }
+            );
+
+
+    }
+
+    catch(error) {
+
+        console.error(
+            error
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   SAVE STUDENT
+===================================================== */
+
+async function saveStudent() {
+
+    const {
+
+        collection,
+        addDoc,
+        updateDoc,
+        doc,
+        serverTimestamp
+
+    } = getFirebase();
+
+
+    const db =
+        window.firebaseDB;
+
+
+    const name =
+        document
+            .getElementById(
+                "studentName"
+            )
+            .value
+            .trim();
+
+
+    const room =
+        document
+            .getElementById(
+                "roomNumber"
+            )
+            .value
+            .trim();
+
+
+    const morningTea =
+        document
+            .getElementById(
+                "morningTea"
+            )
+            .checked;
+
+
+    const breakfast =
+        document
+            .getElementById(
+                "breakfast"
+            )
+            .checked;
+
+
+    const lunch =
+        document
+            .getElementById(
+                "lunch"
+            )
+            .checked;
+
+
+    const snacks =
+        document
+            .getElementById(
+                "snacks"
+            )
+            .checked;
+
+
+    const eveningTea =
+        document
+            .getElementById(
+                "eveningTea"
+            )
+            .checked;
+
+
+    const dinner =
+        document
+            .getElementById(
+                "dinner"
+            )
+            .checked;
+
+
+    const sweet =
+        document
+            .getElementById(
+                "sweet"
+            )
+            .checked;
+
+
+    const lunchType =
+        document.querySelector(
+            'input[name="lunchType"]:checked'
+        ).value;
+
+
+    const dinnerType =
+        document.querySelector(
+            'input[name="dinnerType"]:checked'
+        ).value;
+
+
+    /* VALIDATION */
+
+    if (!name) {
+
+        alert(
+            "Please enter student name."
+        );
+
+        return;
+
+    }
+
+
+    if (!room) {
+
+        alert(
+            "Please enter room number."
+        );
+
+        return;
+
+    }
+
+
+    if (
+
+        !morningTea &&
+        !breakfast &&
+        !lunch &&
+        !snacks &&
+        !eveningTea &&
+        !dinner
+
+    ) {
+
+        alert(
+            "Please select at least one food requirement."
+        );
+
+        return;
+
+    }
+
+
+    const student = {
+
+        name,
+
+        room,
+
+        morningTea,
+
+        breakfast,
+
+        lunch,
+
+        lunchType,
+
+        snacks,
+
+        eveningTea,
+
+        dinner,
+
+        dinnerType,
+
+        sweet:
+            dinner
+                ? sweet
+                : false,
+
+        /*
+            Firebase server timestamp.
+
+            This is important because
+            every user's computer may have
+            a different clock.
+        */
+
+        createdAt:
+            serverTimestamp()
+
+    };
+
+
+    try {
+
+
+        /* EDIT */
+
+        if (editingId) {
+
+            await updateDoc(
+
+                doc(
+                    db,
+                    "hostelStudents",
+                    editingId
+                ),
+
+                student
+
+            );
+
+
+            editingId = null;
+
+
+            document.getElementById(
+                "saveButton"
+            ).textContent =
+                "➕ Add Student";
+
+
+            document.getElementById(
+                "formTitle"
+            ).textContent =
+                "➕ Add Student Food Requirement";
+
+        }
+
+
+        /* ADD */
+
+        else {
+
+            await addDoc(
+
+                collection(
+                    db,
+                    "hostelStudents"
+                ),
+
+                student
+
+            );
+
+        }
+
+
+        clearForm();
+
+
+    }
+
+    catch(error) {
+
+        console.error(
+            error
+        );
+
+
+        alert(
+            "Unable to save student. Please check your internet connection."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   DISPLAY STUDENTS
+===================================================== */
+
+function displayStudents() {
+
+    const table =
+        document.getElementById(
+            "studentTable"
+        );
+
+
+    const search =
+        document
+            .getElementById(
+                "search"
+            )
+            .value
+            .toLowerCase();
+
+
+    table.innerHTML = "";
+
+
+    const filtered =
+        students.filter(
+            student =>
+                student.name
+                    ?.toLowerCase()
+                    .includes(search)
+        );
+
+
+    if (
+        filtered.length === 0
+    ) {
+
+        table.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="13"
+                    class="empty"
+                >
+
+                    No students found.
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    filtered.forEach(
+        (student, index) => {
+
+
+            const row =
+                document.createElement(
+                    "tr"
+                );
+
+
+            row.innerHTML = `
+
+                <td>
+                    ${index + 1}
+                </td>
+
+
+                <td>
+
+                    <strong>
+                        ${escapeHTML(
+                            student.name
+                        )}
+                    </strong>
+
+                </td>
+
+
+                <td>
+
+                    ${escapeHTML(
+                        student.room || "-"
+                    )}
+
+                </td>
+
+
+                <td>
+                    ${yesNo(
+                        student.morningTea
+                    )}
+                </td>
+
+
+                <td>
+                    ${yesNo(
+                        student.breakfast
+                    )}
+                </td>
+
+
+                <td>
+                    ${yesNo(
+                        student.lunch
+                    )}
+                </td>
+
+
+                <td>
+
+                    ${
+                        student.lunch
+                            ? escapeHTML(
+                                student.lunchType
+                            )
+                            : "-"
+                    }
+
+                </td>
+
+
+                <td>
+                    ${yesNo(
+                        student.snacks
+                    )}
+                </td>
+
+
+                <td>
+                    ${yesNo(
+                        student.eveningTea
+                    )}
+                </td>
+
+
+                <td>
+                    ${yesNo(
+                        student.dinner
+                    )}
+                </td>
+
+
+                <td>
+
+                    ${
+                        student.dinner
+                            ? escapeHTML(
+                                student.dinnerType
+                            )
+                            : "-"
+                    }
+
+                </td>
+
+
+                <td>
+
+                    ${
+                        student.sweet
+
+                            ? '<span class="yes">✓ Yes</span>'
+
+                            : '<span class="no">No</span>'
+                    }
+
+                </td>
+
+
+                <td>
+
+                    <button
+                        class="edit-btn"
+                        onclick="editStudent('${student.id}')"
+                    >
+
+                        Edit
+
+                    </button>
+
+
+                    <button
+                        class="delete-btn"
+                        onclick="deleteStudent('${student.id}')"
+                    >
+
+                        Delete
+
+                    </button>
+
+                </td>
+
+            `;
+
+
+            table.appendChild(
+                row
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   YES / NO
+===================================================== */
+
+function yesNo(value) {
+
+    return value
+
+        ? '<span class="yes">✓ Yes</span>'
+
+        : '<span class="no">No</span>';
+
+}
+
+
+/* =====================================================
+   EDIT
+===================================================== */
+
+function editStudent(id) {
+
+    const student =
+        students.find(
+            item =>
+                item.id === id
+        );
+
+
+    if (!student) {
+
+        return;
+
+    }
+
+
+    editingId = id;
+
+
+    document.getElementById(
+        "studentName"
+    ).value =
+        student.name;
+
+
+    document.getElementById(
+        "roomNumber"
+    ).value =
+        student.room;
+
+
+    document.getElementById(
+        "morningTea"
+    ).checked =
+        !!student.morningTea;
+
+
+    document.getElementById(
+        "breakfast"
+    ).checked =
+        !!student.breakfast;
+
+
+    document.getElementById(
+        "lunch"
+    ).checked =
+        !!student.lunch;
+
+
+    document.getElementById(
+        "snacks"
+    ).checked =
+        !!student.snacks;
+
+
+    document.getElementById(
+        "eveningTea"
+    ).checked =
+        !!student.eveningTea;
+
+
+    document.getElementById(
+        "dinner"
+    ).checked =
+        !!student.dinner;
+
+
+    document.getElementById(
+        "sweet"
+    ).checked =
+        !!student.sweet;
+
+
+    const lunchRadio =
+        document.querySelector(
+            `input[name="lunchType"][value="${student.lunchType}"]`
+        );
+
+
+    if (lunchRadio) {
+
+        lunchRadio.checked =
+            true;
+
+    }
+
+
+    const dinnerRadio =
+        document.querySelector(
+            `input[name="dinnerType"][value="${student.dinnerType}"]`
+        );
+
+
+    if (dinnerRadio) {
+
+        dinnerRadio.checked =
+            true;
+
+    }
+
+
+    document.getElementById(
+        "saveButton"
+    ).textContent =
+        "💾 Update Student";
+
+
+    document.getElementById(
+        "formTitle"
+    ).textContent =
+        "✏️ Edit Student Food Requirement";
+
+
+    window.scrollTo({
+
+        top: 0,
+
+        behavior: "smooth"
+
+    });
+
+}
+
+
+/* =====================================================
+   DELETE
+===================================================== */
+
+async function deleteStudent(id) {
+
+    if (
+        !confirm(
+            "Delete this student's entry?"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const {
+
+            deleteDoc,
+            doc
+
+        } = getFirebase();
+
+
+        await deleteDoc(
+
+            doc(
+                window.firebaseDB,
+                "hostelStudents",
+                id
+            )
+
+        );
+
+    }
+
+    catch(error) {
+
+        console.error(
+            error
+        );
+
+        alert(
+            "Unable to delete student."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   UPDATE COUNTS
+===================================================== */
+
+function updateCounts() {
+
+
+    const count =
+        field =>
+            students.filter(
+                s => s[field]
+            ).length;
+
+
+    document.getElementById(
+        "totalStudents"
+    ).textContent =
+        students.length;
+
+
+    const morning =
+        count(
+            "morningTea"
+        );
+
+
+    document.getElementById(
+        "totalMorningTea"
+    ).textContent =
+        morning;
+
+
+    document.getElementById(
+        "morningTeaCount"
+    ).textContent =
+        morning;
+
+
+    const breakfast =
+        count(
+            "breakfast"
+        );
+
+
+    document.getElementById(
+        "totalBreakfast"
+    ).textContent =
+        breakfast;
+
+
+    document.getElementById(
+        "breakfastCount"
+    ).textContent =
+        breakfast;
+
+
+    const lunch =
+        count(
+            "lunch"
+        );
+
+
+    document.getElementById(
+        "totalLunch"
+    ).textContent =
+        lunch;
+
+
+    document.getElementById(
+        "lunchCount"
+    ).textContent =
+        lunch;
+
+
+    const dining =
+        students.filter(
+            s =>
+                s.lunch &&
+                s.lunchType ===
+                    "Dining Hall"
+        ).length;
+
+
+    document.getElementById(
+        "diningCount"
+    ).textContent =
+        dining;
+
+
+    const tiffin =
+        students.filter(
+            s =>
+                s.lunch &&
+                s.lunchType ===
+                    "Tiffin Box"
+        ).length;
+
+
+    document.getElementById(
+        "tiffinCount"
+    ).textContent =
+        tiffin;
+
+
+    const snacks =
+        count(
+            "snacks"
+        );
+
+
+    document.getElementById(
+        "totalSnacks"
+    ).textContent =
+        snacks;
+
+
+    document.getElementById(
+        "snacksCount"
+    ).textContent =
+        snacks;
+
+
+    const evening =
+        count(
+            "eveningTea"
+        );
+
+
+    document.getElementById(
+        "totalEveningTea"
+    ).textContent =
+        evening;
+
+
+    document.getElementById(
+        "eveningTeaCount"
+    ).textContent =
+        evening;
+
+
+    const dinner =
+        count(
+            "dinner"
+        );
+
+
+    document.getElementById(
+        "totalDinner"
+    ).textContent =
+        dinner;
+
+
+    document.getElementById(
+        "dinnerCount"
+    ).textContent =
+        dinner;
+
+
+    const veg =
+        students.filter(
+            s =>
+                s.dinner &&
+                s.dinnerType ===
+                    "Veg"
+        ).length;
+
+
+    document.getElementById(
+        "dinnerVeg"
+    ).textContent =
+        veg;
+
+
+    const nonVeg =
+        students.filter(
+            s =>
+                s.dinner &&
+                s.dinnerType ===
+                    "Non-Veg"
+        ).length;
+
+
+    document.getElementById(
+        "dinnerNonVeg"
+    ).textContent =
+        nonVeg;
+
+
+    const sweet =
+        students.filter(
+            s =>
+                s.dinner &&
+                s.sweet
+        ).length;
+
+
+    document.getElementById(
+        "totalSweet"
+    ).textContent =
+        sweet;
+
+
+    document.getElementById(
+        "sweetCount"
+    ).textContent =
+        sweet;
+
+}
+
+
+/* =====================================================
+   CLEAR FORM
+===================================================== */
+
+function clearForm() {
+
+    document.getElementById(
+        "studentName"
+    ).value = "";
+
+
+    document.getElementById(
+        "roomNumber"
+    ).value = "";
+
+
+    document.getElementById(
+        "morningTea"
+    ).checked = false;
+
+
+    document.getElementById(
+        "breakfast"
+    ).checked = false;
+
+
+    document.getElementById(
+        "lunch"
+    ).checked = false;
+
+
+    document.getElementById(
+        "snacks"
+    ).checked = false;
+
+
+    document.getElementById(
+        "eveningTea"
+    ).checked = false;
+
+
+    document.getElementById(
+        "dinner"
+    ).checked = false;
+
+
+    document.getElementById(
+        "sweet"
+    ).checked = false;
+
+
+    document.querySelector(
+        'input[name="lunchType"][value="Dining Hall"]'
+    ).checked = true;
+
+
+    document.querySelector(
+        'input[name="dinnerType"][value="Veg"]'
+    ).checked = true;
+
+
+    editingId = null;
+
+
+    document.getElementById(
+        "saveButton"
+    ).textContent =
+        "➕ Add Student";
+
+
+    document.getElementById(
+        "formTitle"
+    ).textContent =
+        "➕ Add Student Food Requirement";
+
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+function updateStatus() {
+
+    const status =
+        document.getElementById(
+            "statusBox"
+        );
+
+
+    if (
+        students.length === 0
+    ) {
+
+        status.textContent =
+            "🟢 Connected. No entries yet. Add today's student requirements.";
+
+        return;
+
+    }
+
+
+    status.textContent =
+        "🟢 Connected. All users are viewing the same live student data.";
+
+}
+
+
+/* =====================================================
+   SECURITY
+===================================================== */
+
+function escapeHTML(value) {
+
+    return String(value)
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* =====================================================
+   AUTOMATIC 24-HOUR DELETE
+===================================================== */
+
+async function deleteExpiredEntries() {
+
+    const {
+
+        collection,
+        getDocs,
+        doc,
+        deleteDoc
+
+    } = getFirebase();
+
+
+    const db =
+        window.firebaseDB;
+
+
+    try {
+
+
+        /*
+            Get every student entry.
+
+            We check createdAt using the
+            Firebase server timestamp.
+        */
+
+        const snapshot =
+            await getDocs(
+
+                collection(
+                    db,
+                    "hostelStudents"
+                )
+
+            );
+
+
+        const now =
+            Date.now();
+
+
+        const twentyFourHours =
+            24 *
+            60 *
+            60 *
+            1000;
+
+
+        for (
+            const item
+            of snapshot.docs
+        ) {
+
+
+            const data =
+                item.data();
+
+
+            /*
+                Firebase Timestamp
+                converted to milliseconds.
+            */
+
+            if (
+                data.createdAt
+            ) {
+
+                const createdTime =
+                    data.createdAt
+                        .toMillis();
+
+
+                /*
+                    Delete after 24 hours.
+                */
+
+                if (
+                    now -
+                    createdTime
+                    >=
+                    twentyFourHours
+                ) {
+
+                    await deleteDoc(
+
+                        doc(
+                            db,
+                            "hostelStudents",
+                            item.id
+                        )
+
+                    );
+
+                }
+
+            }
+
+        }
+
+
+    }
+
+    catch(error) {
+
+        console.error(
+            "Automatic deletion error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   CHECK EVERY MINUTE
+===================================================== */
+
+setInterval(
+
+    deleteExpiredEntries,
+
+    60 * 1000
+
+);
+
+
+/* Also check when website opens */
+
+setTimeout(
+
+    deleteExpiredEntries,
+
+    3000
+
+);
+
+</script>
+
+</body>
+
+</html>
